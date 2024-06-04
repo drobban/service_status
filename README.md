@@ -21,3 +21,15 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at <https://hexdocs.pm/service_status>.
 
+## Example
+
+```elixir
+GenServer.cast(ServiceStatus.Worker, 
+                {:register, 
+                  %{name: "efs-demo", 
+                    config: %ServiceStatus.Config{interval: 60, 
+                                                  url: "https://efs-demo.conrock.se"}
+                    }
+                }
+            )
+```

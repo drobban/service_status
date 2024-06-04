@@ -9,7 +9,7 @@ defmodule ServiceStatus.Application do
   def start(_type, _args) do
     children = [
       # Starts a worker by calling: ServiceStatus.Worker.start_link(arg)
-      # {ServiceStatus.Worker, arg}
+      {ServiceStatus.Worker, %{}}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
