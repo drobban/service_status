@@ -1,4 +1,5 @@
 defmodule ServiceStatus.Worker do
+  require Logger
   use GenServer
   alias ServiceStatus.Config
   alias ServiceStatus.Monitor.Util
@@ -13,19 +14,19 @@ defmodule ServiceStatus.Worker do
   end
 
   def handle_continue(setup_args, state) do
-    IO.inspect("If we have a initial set of keys in state lets run em as if registered")
-    IO.inspect("#{inspect(setup_args)}")
+    Logger.debug("If we have a initial set of keys in state lets run em as if registered")
+    Logger.debug("#{inspect(setup_args)}")
 
     {:noreply, state}
   end
 
   def handle_cast(:status, state) do
-    IO.inspect("Show state: #{inspect(state)}")
+    Logger.debug("Show state: #{inspect(state)}")
     {:noreply, state}
   end
 
   def handle_cast({:register, %{name: name, config: %Config{} = config}}, state) do
-    IO.inspect("#{name} - Config: #{config.url}")
+    Logger.info("Registered #{name} - Config: #{config.url}")
 
     schedule_monitor(name, config)
 
@@ -37,8 +38,8 @@ defmodule ServiceStatus.Worker do
 
   def handle_info({:monitor, name}, state) do
     %Config{url: url} = state[name]
-    
-    IO.inspect("#{inspect DateTime.now!("Etc/UTC")} Ping: #{url} #{inspect Util.is_ok(url)}")
+
+    Logger.debug("#{inspect(DateTime.now!("Etc/UTC"))} Ping: #{url} #{inspect(Util.is_ok(url))}")
 
     schedule_monitor(name, state[name])
     {:noreply, state}
