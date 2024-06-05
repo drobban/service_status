@@ -29,7 +29,11 @@ be found at <https://hexdocs.pm/service_status>.
       {:register,
        %{
          name: "efs-demo",
-         config: %ServiceStatus.Config{interval: 60, url: "https://efs-demo.conrock.se"}
+         config: %ServiceStatus.Config{
+           interval: 60,
+           url: "https://efs-demo.conrock.se",
+           client: self()
+         }
        }}
     )
 ```
