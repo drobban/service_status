@@ -3,6 +3,7 @@ defmodule ServiceStatus.Worker do
   use GenServer
   alias ServiceStatus.Config
   alias ServiceStatus.Monitor.Util
+  alias ServiceStatus.Message.Status
 
   def start_link(arg) do
     IO.inspect("#{inspect(arg)}")
@@ -14,7 +15,7 @@ defmodule ServiceStatus.Worker do
   end
 
   def handle_continue(setup_args, state) do
-    Logger.debug("If we have a initial set of keys in state lets run em as if registered")
+    Logger.debug("Setup with default args/or state pre-crash")
     Logger.debug("#{inspect(setup_args)}")
 
     {:noreply, state}
@@ -37,12 +38,24 @@ defmodule ServiceStatus.Worker do
   end
 
   def handle_info({:monitor, name}, state) do
-    %Config{url: url} = state[name]
+    %Config{url: url, client: pid} = state[name]
 
     ping_status = Util.is_ok(url)
     response_time = Util.response_time(url, :millisecond)
 
-    Logger.debug("Ping: #{url} #{inspect(ping_status)} - #{response_time}ms")
+    msg = %Status{
+      alias: name,
+      url: url,
+      response_time: response_time,
+      time_unit: :millisecond,
+      ok: ping_status
+    }
+
+    if !is_nil(pid) do
+      Process.send(pid, msg, [:noconnect, :nosuspend])
+    end
+
+    Logger.debug(inspect(msg))
     schedule_monitor(name, state[name])
     {:noreply, state}
   end
