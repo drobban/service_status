@@ -24,12 +24,12 @@ be found at <https://hexdocs.pm/service_status>.
 ## Example
 
 ```elixir
-GenServer.cast(ServiceStatus.Worker, 
-                {:register, 
-                  %{name: "efs-demo", 
-                    config: %ServiceStatus.Config{interval: 60, 
-                                                  url: "https://efs-demo.conrock.se"}
-                    }
-                }
-            )
+    GenServer.cast(
+      ServiceStatus.Worker,
+      {:register,
+       %{
+         name: "efs-demo",
+         config: %ServiceStatus.Config{interval: 60, url: "https://efs-demo.conrock.se"}
+       }}
+    )
 ```

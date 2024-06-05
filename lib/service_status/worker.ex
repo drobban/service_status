@@ -39,8 +39,10 @@ defmodule ServiceStatus.Worker do
   def handle_info({:monitor, name}, state) do
     %Config{url: url} = state[name]
 
-    Logger.debug("#{inspect(DateTime.now!("Etc/UTC"))} Ping: #{url} #{inspect(Util.is_ok(url))}")
+    ping_status = Util.is_ok(url)
+    response_time = Util.response_time(url, :millisecond)
 
+    Logger.debug("Ping: #{url} #{inspect(ping_status)} - #{response_time}ms")
     schedule_monitor(name, state[name])
     {:noreply, state}
   end
