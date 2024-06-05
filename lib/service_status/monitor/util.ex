@@ -2,7 +2,8 @@ defmodule ServiceStatus.Monitor.Util do
   require Logger
 
   def is_ok(url) do
-    {status, resp} = Req.get(url, max_retries: 0, pool_timeout: 1000)
+    {status, resp} =
+      Req.get(url, max_retries: 0, pool_timeout: 1000, connect_options: [timeout: 500])
 
     response_status =
       if status == :ok do
@@ -27,7 +28,7 @@ defmodule ServiceStatus.Monitor.Util do
 
   def response_time(url, unit \\ :millisecond) do
     req_date = DateTime.now!("Etc/UTC")
-    Req.get(url, max_retries: 0, pool_timeout: 1000)
+    Req.get(url, max_retries: 0, pool_timeout: 1000, connect_options: [timeout: 500])
     response_date = DateTime.now!("Etc/UTC")
 
     td = DateTime.diff(response_date, req_date, unit)
