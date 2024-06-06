@@ -6,20 +6,13 @@ supply url and interval given in seconds and you will recieve events informing a
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `service_status` to your list of dependencies in `mix.exs`:
-
 ```elixir
 def deps do
   [
-    {:service_status, "~> 0.1.0"}
+    {:service_status, git: "git@github.com:drobban/service_status.git", ref: "9cb5b18b1c81a"}
   ]
 end
 ```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/service_status>.
 
 ## Example
 
