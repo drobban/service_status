@@ -37,27 +37,46 @@ defmodule ServiceStatus.Worker do
     {:noreply, state}
   end
 
+  def handle_cast({:unregister, %{name: name}}, state) do
+    Logger.info("Unregistered #{name}")
+
+    #schedule_monitor(name, config)
+
+    {dropped_conf, state} =
+      state |> Map.pop(name)
+    Logger.debug("Conf droppen: #{inspect dropped_conf}")
+
+    {:noreply, state}
+  end
+
   def handle_info({:monitor, name}, state) do
-    %Config{url: url, client: pid, internal_id: id} = state[name]
+    state_conf = state[name]
 
-    ping_status = Util.is_ok(url)
-    response_time = Util.response_time(url, :millisecond)
+    if ! is_nil(state_conf) do
+      %Config{url: url, client: pid, internal_id: id} = state[name]
 
-    msg = %Status{
-      alias: name,
-      url: url,
-      response_time: response_time,
-      time_unit: :millisecond,
-      ok: ping_status,
-      id: id
-    }
+      ping_status = Util.is_ok(url)
+      response_time = Util.response_time(url, :millisecond)
 
-    if !is_nil(pid) do
-      Process.send(pid, msg, [:noconnect, :nosuspend])
+      msg = %Status{
+        alias: name,
+        url: url,
+        response_time: response_time,
+        time_unit: :millisecond,
+        ok: ping_status,
+        id: id
+      }
+
+      if !is_nil(pid) do
+        Process.send(pid, msg, [:noconnect, :nosuspend])
+      end
+
+      Logger.debug(inspect(msg))
+      schedule_monitor(name, state[name])
+    else
+      Logger.debug("Service unregistered: #{name}")  
     end
 
-    Logger.debug(inspect(msg))
-    schedule_monitor(name, state[name])
     {:noreply, state}
   end
 
