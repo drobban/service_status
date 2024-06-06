@@ -38,7 +38,7 @@ defmodule ServiceStatus.Worker do
   end
 
   def handle_info({:monitor, name}, state) do
-    %Config{url: url, client: pid} = state[name]
+    %Config{url: url, client: pid, internal_id: id} = state[name]
 
     ping_status = Util.is_ok(url)
     response_time = Util.response_time(url, :millisecond)
@@ -48,7 +48,8 @@ defmodule ServiceStatus.Worker do
       url: url,
       response_time: response_time,
       time_unit: :millisecond,
-      ok: ping_status
+      ok: ping_status,
+      id: id
     }
 
     if !is_nil(pid) do
