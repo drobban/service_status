@@ -26,37 +26,48 @@ defmodule ServiceStatus.Worker do
     {:noreply, state}
   end
 
-  def handle_cast({:register, %{name: name, config: %Config{} = config}}, state) do
+  def handle_cast({:register, %{name: name, config: %Config{internal_id: id} = config}}, state) do
     Logger.info("Registered #{name} - Config: #{config.url}")
+
+    configs = 
+      state
+      |> Map.get(name, %{})
+
+    configs =
+      configs
+      |> Map.put(id, config)
 
     schedule_monitor(name, config)
 
     state =
-      state |> Map.put(name, config)
+      state |> Map.put(name, configs)
 
     {:noreply, state}
   end
 
-  def handle_cast({:unregister, %{name: name}}, state) do
+  def handle_cast({:unregister, %{name: name, id: id}}, state) do
     Logger.info("Unregistered #{name}")
 
-    #schedule_monitor(name, config)
+    state =
+      state
+      |> Map.update(name, %{}, 
+        fn configs -> {_, cleared_configs} = Map.pop(configs, id)
+          cleared_configs
+        end)
 
-    {dropped_conf, state} =
-      state |> Map.pop(name)
-    Logger.debug("Conf droppen: #{inspect dropped_conf}")
-
+    Logger.debug("Conf droppen: #{name} : #{id}")
     {:noreply, state}
   end
 
-  def handle_info({:monitor, name}, state) do
-    state_conf = state[name]
+  def handle_info({:monitor, {name, id}}, state) do
+    state_conf = 
+      state
+      |> get_in([name, id])
 
     if ! is_nil(state_conf) do
-      %Config{url: url, client: pid, internal_id: id} = state[name]
+      %Config{url: url, client: pid, internal_id: id} = state_conf
 
-      ping_status = Util.is_ok(url)
-      response_time = Util.response_time(url, :millisecond)
+      {response_time, ping_status} = Util.response_stat(url, :millisecond)
 
       msg = %Status{
         alias: name,
@@ -72,7 +83,7 @@ defmodule ServiceStatus.Worker do
       end
 
       Logger.debug(inspect(msg))
-      schedule_monitor(name, state[name])
+      schedule_monitor(name, state_conf)
     else
       Logger.debug("Service unregistered: #{name}")  
     end
@@ -83,6 +94,6 @@ defmodule ServiceStatus.Worker do
   defp schedule_monitor(name, %Config{} = config) do
     # We schedule the work to happen in config.interval seconds 
     # (written in milliseconds).
-    Process.send_after(self(), {:monitor, name}, config.interval * 1000)
+    Process.send_after(self(), {:monitor, {name, config.internal_id}}, config.interval * 1000)
   end
 end
