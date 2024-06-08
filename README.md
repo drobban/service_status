@@ -17,16 +17,13 @@ end
 ## Example
 
 ```elixir
-    GenServer.cast(
-      ServiceStatus.Worker,
-      {:register,
-       %{
-         name: "efs-demo",
-         config: %ServiceStatus.Config{
-           interval: 60,
-           url: "https://efs-demo.conrock.se",
-           client: self()
-         }
-       }}
-    )
+
+      iex> ServiceStatus.register("google", %ServiceStatus.Config{
+      iex> interval: 180,
+      iex> url: "https://google.com",
+      iex> client: self(),
+      iex> internal_id: 1
+      iex> })      
+      :ok
+
 ```

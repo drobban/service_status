@@ -21,6 +21,10 @@ defmodule ServiceStatus.Worker do
     {:noreply, state}
   end
 
+  def handle_call(:status, _from, state) do
+    {:reply, state, state}
+  end
+
   def handle_cast(:status, state) do
     Logger.debug("Show state: #{inspect(state)}")
     {:noreply, state}
@@ -29,7 +33,7 @@ defmodule ServiceStatus.Worker do
   def handle_cast({:register, %{name: name, config: %Config{internal_id: id} = config}}, state) do
     Logger.info("Registered #{name} - Config: #{config.url}")
 
-    configs = 
+    configs =
       state
       |> Map.get(name, %{})
 
@@ -50,21 +54,21 @@ defmodule ServiceStatus.Worker do
 
     state =
       state
-      |> Map.update(name, %{}, 
-        fn configs -> {_, cleared_configs} = Map.pop(configs, id)
-          cleared_configs
-        end)
+      |> Map.update(name, %{}, fn configs ->
+        {_, cleared_configs} = Map.pop(configs, id)
+        cleared_configs
+      end)
 
     Logger.debug("Conf droppen: #{name} : #{id}")
     {:noreply, state}
   end
 
   def handle_info({:monitor, {name, id}}, state) do
-    state_conf = 
+    state_conf =
       state
       |> get_in([name, id])
 
-    if ! is_nil(state_conf) do
+    if !is_nil(state_conf) do
       %Config{url: url, client: pid, internal_id: id} = state_conf
 
       {response_time, ping_status} = Util.response_stat(url, :millisecond)
@@ -85,7 +89,7 @@ defmodule ServiceStatus.Worker do
       Logger.debug(inspect(msg))
       schedule_monitor(name, state_conf)
     else
-      Logger.debug("Service unregistered: #{name}")  
+      Logger.debug("Service unregistered: #{name}")
     end
 
     {:noreply, state}

@@ -28,8 +28,10 @@ defmodule ServiceStatus.Monitor.Util do
 
   def response_stat(url, unit \\ :millisecond) do
     req_date = DateTime.now!("Etc/UTC")
+
     {status, resp} =
       Req.get(url, max_retries: 0, pool_timeout: 1000, connect_options: [timeout: 500])
+
     response_date = DateTime.now!("Etc/UTC")
 
     response_status =
@@ -40,6 +42,7 @@ defmodule ServiceStatus.Monitor.Util do
       end
 
     td = DateTime.diff(response_date, req_date, unit)
+
     case response_status do
       200 ->
         {td, true}
@@ -53,8 +56,6 @@ defmodule ServiceStatus.Monitor.Util do
         {td, false}
     end
   end
-
-
 
   def response_time(url, unit \\ :millisecond) do
     req_date = DateTime.now!("Etc/UTC")

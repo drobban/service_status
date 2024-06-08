@@ -3,6 +3,10 @@ defmodule ServiceStatusTest do
   doctest ServiceStatus
 
   test "greets the world" do
-    assert ServiceStatus.hello() == :world
+    assert :test == :test
+  end
+
+  test "callback status" do
+    assert ServiceStatus.status() == %{}
   end
 end
