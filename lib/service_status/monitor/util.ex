@@ -26,6 +26,17 @@ defmodule ServiceStatus.Monitor.Util do
     end
   end
 
+  def response_time(url, unit \\ :millisecond) do
+    req_date = DateTime.now!("Etc/UTC")
+    Req.get(url, max_retries: 0, pool_timeout: 1000, connect_options: [timeout: 500])
+    response_date = DateTime.now!("Etc/UTC")
+
+    td = DateTime.diff(response_date, req_date, unit)
+    Logger.debug("Time delay in #{inspect(unit)}: #{td}")
+
+    td
+  end
+
   def response_stat(url, unit \\ :millisecond) do
     req_date = DateTime.now!("Etc/UTC")
 
@@ -48,23 +59,12 @@ defmodule ServiceStatus.Monitor.Util do
         {td, true}
 
       404 = not_found ->
-        Logger.debug("Page not found #{not_found} from - #{url}")
+        Logger.warning("Page not found #{not_found} from - #{url}")
         {td, false}
 
       unknown ->
-        Logger.debug("Got: #{unknown} from - #{url}")
+        Logger.warning("Got: #{unknown} from - #{url}")
         {td, false}
     end
-  end
-
-  def response_time(url, unit \\ :millisecond) do
-    req_date = DateTime.now!("Etc/UTC")
-    Req.get(url, max_retries: 0, pool_timeout: 1000, connect_options: [timeout: 500])
-    response_date = DateTime.now!("Etc/UTC")
-
-    td = DateTime.diff(response_date, req_date, unit)
-    Logger.debug("Time delay in #{inspect(unit)}: #{td}")
-
-    td
   end
 end
