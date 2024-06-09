@@ -49,6 +49,7 @@ defmodule ServiceStatus.Monitor.Util do
       if status == :ok do
         resp |> Map.get(:status)
       else
+        Logger.warning("Request response: #{inspect status} - response: #{inspect resp}")
         0
       end
 
