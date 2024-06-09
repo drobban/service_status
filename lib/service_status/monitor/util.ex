@@ -49,7 +49,7 @@ defmodule ServiceStatus.Monitor.Util do
       if status == :ok do
         resp |> Map.get(:status)
       else
-        Logger.warning("Request response: #{inspect status} - response: #{inspect resp}")
+        Logger.warning("Request response: #{inspect(status)} - response: #{inspect(resp)}")
         0
       end
 
@@ -57,15 +57,15 @@ defmodule ServiceStatus.Monitor.Util do
 
     case response_status do
       200 ->
-        {td, true}
+        {td, true, ""}
 
       404 = not_found ->
         Logger.warning("Page not found #{not_found} from - #{url}")
-        {td, false}
+        {td, false, "Request response: #{inspect(status)} - response: #{inspect(resp)}"}
 
       unknown ->
         Logger.warning("Got: #{unknown} from - #{url}")
-        {td, false}
+        {td, false, "Request response: #{inspect(status)} - response: #{inspect(resp)}"}
     end
   end
 end

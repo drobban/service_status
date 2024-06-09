@@ -1,6 +1,7 @@
 defmodule ServiceStatus.Worker do
   require Logger
   use GenServer
+  alias ServiceStatus.Message.Debug
   alias ServiceStatus.Config
   alias ServiceStatus.Monitor.Util
   alias ServiceStatus.Message.Status
@@ -71,7 +72,7 @@ defmodule ServiceStatus.Worker do
     if !is_nil(state_conf) do
       %Config{url: url, client: pid, internal_id: id} = state_conf
 
-      {response_time, ping_status} = Util.response_stat(url, :millisecond)
+      {response_time, ping_status, debug} = Util.response_stat(url, :millisecond)
 
       msg = %Status{
         alias: name,
@@ -82,8 +83,11 @@ defmodule ServiceStatus.Worker do
         id: id
       }
 
+      debug_msg = %Debug{message: debug}
+
       if !is_nil(pid) do
         Process.send(pid, msg, [:noconnect, :nosuspend])
+        Process.send(pid, debug_msg, [:noconnect, :nosuspend])
       end
 
       Logger.debug(inspect(msg))
