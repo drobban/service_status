@@ -40,8 +40,10 @@ defmodule ServiceStatus.Monitor.Util do
   def response_stat(url, unit \\ :millisecond) do
     req_date = DateTime.now!("Etc/UTC")
 
+    # :unprocessed - We are getting into situations where the server has closed a connection.
+    # When that happens, we should give it a try again.
     {status, resp} =
-      Req.get(url, max_retries: 0, pool_timeout: 1000, connect_options: [timeout: 500])
+      Req.get(url, max_retries: 2, pool_timeout: 1000, connect_options: [timeout: 500])
 
     response_date = DateTime.now!("Etc/UTC")
 
