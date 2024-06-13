@@ -38,11 +38,22 @@ defmodule ServiceStatus.Worker do
       state
       |> Map.get(name, %{})
 
+    old_config =
+      state
+      |> Map.get(name, %{})
+      |> Map.get(id, nil)
+
+    if !is_nil(old_config) do
+      # Abort old timer.
+      Process.cancel_timer(old_config.monitor)
+    end
+
+    monitor_ref = schedule_monitor(name, config)
+    config = %Config{config | monitor: monitor_ref}
+
     configs =
       configs
       |> Map.put(id, config)
-
-    schedule_monitor(name, config)
 
     state =
       state |> Map.put(name, configs)
@@ -69,32 +80,49 @@ defmodule ServiceStatus.Worker do
       state
       |> get_in([name, id])
 
-    if !is_nil(state_conf) do
-      %Config{url: url, client: pid, internal_id: id} = state_conf
+    monitor_ref =
+      if !is_nil(state_conf) do
+        %Config{url: url, client: pid, internal_id: id} = state_conf
 
-      {response_time, ping_status, debug} = Util.response_stat(url, :millisecond)
+        {response_time, ping_status, debug} = Util.response_stat(url, :millisecond)
 
-      msg = %Status{
-        alias: name,
-        url: url,
-        response_time: response_time,
-        time_unit: :millisecond,
-        ok: ping_status,
-        id: id
-      }
+        msg = %Status{
+          alias: name,
+          url: url,
+          response_time: response_time,
+          time_unit: :millisecond,
+          ok: ping_status,
+          id: id
+        }
 
-      debug_msg = %Debug{message: debug}
+        debug_msg = %Debug{message: debug}
 
-      if !is_nil(pid) do
-        Process.send(pid, msg, [:noconnect, :nosuspend])
-        Process.send(pid, debug_msg, [:noconnect, :nosuspend])
+        if !is_nil(pid) do
+          Process.send(pid, msg, [:noconnect, :nosuspend])
+          Process.send(pid, debug_msg, [:noconnect, :nosuspend])
+        end
+
+        Logger.debug(inspect(msg))
+        schedule_monitor(name, state_conf)
+      else
+        Logger.debug("Service unregistered: #{name}")
+        nil
       end
 
-      Logger.debug(inspect(msg))
-      schedule_monitor(name, state_conf)
-    else
-      Logger.debug("Service unregistered: #{name}")
-    end
+    state =
+      if !is_nil(state_conf) do
+        configs = state |> Map.get(name, %{})
+
+        config = %Config{state_conf | monitor: monitor_ref}
+
+        configs =
+          configs
+          |> Map.put(id, config)
+
+        state |> Map.put(name, configs)
+      else
+        state
+      end
 
     {:noreply, state}
   end
